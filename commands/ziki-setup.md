@@ -155,34 +155,63 @@ zero context):
 
 > Process the Ziki knowledge base inbox.
 >
-> This is a Ziki vault: an AI-managed knowledge base. The repo contains `_inbox/`
-> (mutable staging area), `wiki/` (compiled wiki pages), `_refs/` (cached reference
-> snapshots), and supporting files.
+> This is a Ziki vault: an AI-managed knowledge base. The repo contains:
+> - `_inbox/` — mutable staging area (agent drafts, rough findings)
+> - `wiki/` — compiled wiki pages (LLM-maintained knowledge layer)
+> - `_refs/` — cached reference snapshots (saved web content for offline verification)
+> - `_meta/` — taxonomy and metadata
+> - `.manifest.json` — tracks which inbox files have been processed
+> - `AGENTS.md` — vault contract, page format, hard rules
 >
-> Steps:
+> ## Steps
+>
 > 1. Read `AGENTS.md` for the vault contract, page format, and hard rules.
 > 2. Read `.manifest.json` to find which `_inbox/` files are already processed.
 > 3. List `_inbox/` and identify unprocessed files.
-> 4. If there are no unprocessed files, exit with a message "No new inbox items."
-> 5. For each unprocessed file:
->    a. Read and classify it (raw source vs draft page).
->    b. Assess quality: reject if too thin, unclear, or near-duplicate.
->    c. Search `wiki/` for related pages. Use web search to verify facts and fill gaps.
->    d. Identify authoritative source URLs for the topic (official docs, specs).
->    e. Create or update `wiki/` pages with complete frontmatter including
->       `ground_truth:` (authoritative URLs), `> [!abstract]` callout,
->       `[[wikilinks]]`, and provenance markers (`^[inferred]`, etc.).
->    f. Cache substantial reference material in `_refs/<domain>--<title>.md` with
->       frontmatter: url, fetched date, content_type.
->    g. Prefer updating existing pages over creating near-duplicates.
->    h. Clean up processed inbox files (delete, mark promoted, or merge).
-> 6. Update `.manifest.json` and `wiki/_index.md`.
-> 7. Commit and push: `wiki: process inbox [YYYY-MM-DD] — N promoted, M rejected`
+> 4. If there are no unprocessed files, exit with "No new inbox items."
 >
-> Hard rules: never invent sources, always populate ground_truth with at least one
-> authoritative URL per wiki page, always use provenance markers.
+> For each unprocessed file:
+>
+> 5. **Classify**: raw source (article, clip, transcript) or draft page (agent stub).
+> 6. **Assess**: reject if too thin, unclear, or near-duplicate. Mark rejected files
+>    with `status: rejected` in frontmatter.
+> 7. **Research**: search `wiki/` for related pages. Use web search to verify facts
+>    and fill gaps. Identify authoritative source URLs (official docs, specs, primary
+>    sources) for the `ground_truth:` frontmatter field.
+> 8. **Re-verify before writing**: for every wiki page you are about to create or
+>    update, fetch its `ground_truth:` URLs (or read from `_refs/` if cached) and
+>    verify your content is consistent with them. If a claim contradicts a ground
+>    truth source, mark it `^[ambiguous]` and note the discrepancy. If a ground truth
+>    URL is unreachable, mark dependent claims `^[stale]`.
+> 9. **Promote**: create or update `wiki/` pages with:
+>    - Complete frontmatter: title, type, tags, sources, ground_truth, created, updated
+>    - `ground_truth:` must contain at least one authoritative URL
+>    - `> [!abstract]` TL;DR callout
+>    - `[[wikilinks]]` to related wiki pages (aim for high link density)
+>    - Provenance markers: `^[inferred]`, `^[ambiguous]`, `^[stale]`
+>    - Prefer updating existing pages over creating near-duplicates
+> 10. **Cache references**: when you fetch a URL that serves as ground truth, cache it
+>     in `_refs/<domain>--<kebab-title>.md` with frontmatter: url, fetched, content_type.
+>     Store clean markdown, not HTML. Check `_refs/` first to avoid duplicates.
+> 11. **Clean up inbox**: delete fully absorbed files, mark others `status: promoted`,
+>     merge or split as needed. The inbox is a mutable staging area.
+> 12. **Update**: `.manifest.json` and `wiki/_index.md`.
+> 13. **Commit and push**: `wiki: process inbox [YYYY-MM-DD] — N promoted, M rejected`
+>
+> ## Hard rules
+> - Never invent sources or citations
+> - Always populate `ground_truth:` with at least one authoritative URL per wiki page
+> - Always re-verify claims against ground truth before writing
+> - Always use provenance markers (`^[inferred]`, `^[ambiguous]`, `^[stale]`)
+> - Prefer updating existing wiki pages over creating near-duplicates
 
-If the trigger is created successfully, store the trigger ID in `~/.claude/ziki.md`
+**Creating or updating the trigger:**
+
+If `~/.claude/ziki.md` already contains a `trigger_id:`, the trigger already exists.
+Use `RemoteTrigger` with `action: "update"` and the existing trigger ID to update its
+prompt and configuration. Show the user what changed.
+
+If no trigger exists yet, create one and store the trigger ID in `~/.claude/ziki.md`
 by adding `trigger_id: <id>` to the YAML frontmatter.
 
 **Prerequisites**: remind the user that the remote agent needs GitHub access to the
