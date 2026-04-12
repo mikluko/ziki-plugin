@@ -1,6 +1,6 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "ziki-plugin",
+  "name": "ziki",
   "description": "AI-managed personal knowledge base plugin for Claude Code",
   "owner": {
     "name": "Mikhail Lukianchenko"
