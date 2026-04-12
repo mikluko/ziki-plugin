@@ -47,11 +47,8 @@ Reject the file if ANY of the following apply:
 - Subject or intention is unclear
 - Near-duplicate of an existing wiki page with nothing new to add
 
-To reject: note `status: rejected` and `rejection_reason: <one line>` for the
-frontmatter update. Do not delete the file. Move on.
-
-**Important**: do not modify the body content of `_inbox/` files. Only update
-frontmatter status fields.
+To reject: set `status: rejected` and `rejection_reason: <one line>` in frontmatter.
+Do not delete rejected files. Move on.
 
 ### 3. Research and enrich
 
@@ -62,10 +59,12 @@ For files that pass assessment:
 - For raw sources: identify all concepts and entities; determine which existing wiki
   pages to update and which new pages to create
 - Identify wikilinks the content missed; find connections to existing pages
+- **Identify ground truth sources**: find authoritative URLs for the topic (official
+  docs, specifications, primary sources). These go into the `ground_truth:` field.
 
 ### 4. Promote
 
-Create or update `wiki/` pages following the AGENTS.md page format:
+Create or update `wiki/` pages following this format:
 
 ```markdown
 ---
@@ -73,6 +72,7 @@ title: "<Page Title>"
 type: concept | entity | comparison | synthesis | reference
 tags: [tag1, tag2]
 sources: [_inbox/foo.md]
+ground_truth: [https://docs.example.com/topic, _refs/example-com--topic.md]
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
 ---
@@ -97,8 +97,13 @@ Content with [[wikilinks]] to related pages.
 - [[Related Page]]
 ```
 
+**Frontmatter fields**:
+- `sources:` — where content came from (inbox files, other wiki pages)
+- `ground_truth:` — authoritative references to verify claims against. URLs and/or
+  `_refs/` paths. These are the "source of truth" for the page's claims.
+
 Minimum bar for a promoted page:
-- Complete frontmatter (`title`, `type`, `tags`, `sources`, `created`, `updated`)
+- Complete frontmatter including `ground_truth:` (at least one authoritative URL)
 - `> [!abstract]` TL;DR callout
 - At least one `[[wikilink]]` to an existing wiki page
 - All claims sourced or marked `^[inferred]`
@@ -109,7 +114,43 @@ appropriate. Prefer updating an existing page over creating a near-duplicate.
 **Draft pages** should be refined and expanded to full wiki quality: complete
 frontmatter, verified facts, wikilinks, provenance markers.
 
-### 5. Update supporting files
+### 5. Cache reference material
+
+When you fetch a URL during enrichment that serves as ground truth for a wiki page,
+consider caching it in `_refs/` to preserve the content and save future bandwidth.
+
+**When to cache**: official documentation, specifications, substantial articles that
+wiki pages will cite as ground truth. Do NOT cache trivial pages or search results.
+
+**Naming**: `<domain>--<kebab-title>.md`
+Examples: `docs-nats-io--jetstream-overview.md`, `kubernetes-io--pod-lifecycle.md`
+
+**Frontmatter**:
+```markdown
+---
+url: "https://docs.nats.io/nats-concepts/jetstream"
+fetched: YYYY-MM-DD
+content_type: documentation | article | specification | transcript
+---
+```
+
+Store clean extracted markdown, not raw HTML. One file per source URL. Check `_refs/`
+first to avoid duplicates.
+
+When a `_refs/` snapshot is created, use the `_refs/` path in the wiki page's
+`ground_truth:` field alongside the original URL.
+
+### 6. Clean up inbox
+
+After promoting an inbox file, you may:
+- **Delete it** if all its content has been fully absorbed into wiki pages
+- **Edit it** to mark `status: promoted` and add `promoted_to: [wiki/page.md]`
+- **Merge** multiple related inbox files into one before promoting
+- **Split** a large inbox file into multiple before promoting
+
+The inbox is a mutable staging area. Do not treat it as an archive.
+
+### 7. Update supporting files
 
 After processing all files, prepare updates to:
 
@@ -118,13 +159,14 @@ After processing all files, prepare updates to:
 2. **`wiki/_index.md`**: add new promoted pages to the hand-curated map under the
    appropriate section
 
-### 6. Commit and push
+### 8. Commit and push
 
 Write all changes to the vault in a single commit (follow the write instructions from
 `~/.claude/ziki.md`):
 
 - All new/updated `wiki/` pages
-- Updated `_inbox/` files (frontmatter status changes only)
+- Any new `_refs/` snapshots
+- Updated or deleted `_inbox/` files
 - Updated `.manifest.json`
 - Updated `wiki/_index.md`
 
@@ -134,8 +176,8 @@ Commit message: `wiki: process inbox [YYYY-MM-DD] — N promoted, M rejected`
 
 - **NEVER** read or write the local filesystem for vault operations
 - **NEVER** use `~/Documents/ziki/` or any other local path
-- **NEVER** edit content of `_inbox/` files (only update frontmatter status fields)
 - **NEVER** invent sources or citations
 - **NEVER** create a near-duplicate wiki page (update the existing one instead)
+- **ALWAYS** populate `ground_truth:` with at least one authoritative URL per wiki page
 - **ALWAYS** use provenance markers: `^[inferred]`, `^[ambiguous]`, `^[stale]`
 - **ALWAYS** write all changes in a single commit at the end

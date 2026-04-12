@@ -156,7 +156,8 @@ zero context):
 > Process the Ziki knowledge base inbox.
 >
 > This is a Ziki vault: an AI-managed knowledge base. The repo contains `_inbox/`
-> (raw drafts), `wiki/` (compiled wiki pages), and supporting files.
+> (mutable staging area), `wiki/` (compiled wiki pages), `_refs/` (cached reference
+> snapshots), and supporting files.
 >
 > Steps:
 > 1. Read `AGENTS.md` for the vault contract, page format, and hard rules.
@@ -167,14 +168,19 @@ zero context):
 >    a. Read and classify it (raw source vs draft page).
 >    b. Assess quality: reject if too thin, unclear, or near-duplicate.
 >    c. Search `wiki/` for related pages. Use web search to verify facts and fill gaps.
->    d. Create or update `wiki/` pages with complete frontmatter, `> [!abstract]`
->       callout, `[[wikilinks]]`, and provenance markers (`^[inferred]`, etc.).
->    e. Prefer updating existing pages over creating near-duplicates.
+>    d. Identify authoritative source URLs for the topic (official docs, specs).
+>    e. Create or update `wiki/` pages with complete frontmatter including
+>       `ground_truth:` (authoritative URLs), `> [!abstract]` callout,
+>       `[[wikilinks]]`, and provenance markers (`^[inferred]`, etc.).
+>    f. Cache substantial reference material in `_refs/<domain>--<title>.md` with
+>       frontmatter: url, fetched date, content_type.
+>    g. Prefer updating existing pages over creating near-duplicates.
+>    h. Clean up processed inbox files (delete, mark promoted, or merge).
 > 6. Update `.manifest.json` and `wiki/_index.md`.
 > 7. Commit and push: `wiki: process inbox [YYYY-MM-DD] — N promoted, M rejected`
 >
-> Hard rules: never edit `_inbox/` content (only frontmatter status), never invent
-> sources, always use provenance markers.
+> Hard rules: never invent sources, always populate ground_truth with at least one
+> authoritative URL per wiki page, always use provenance markers.
 
 If the trigger is created successfully, store the trigger ID in `~/.claude/ziki.md`
 by adding `trigger_id: <id>` to the YAML frontmatter.

@@ -1,7 +1,7 @@
 ---
 name: ziki-add
 description: This skill should be used when the user asks to "add to ziki", "save to ziki", "file this in ziki", "add to inbox", or "save this to the knowledge base". Also used internally by the Stop and PreCompact hooks to autonomously file inbox-worthy content from the current session.
-version: 1.1.0
+version: 1.3.0
 ---
 
 # Ziki Add
@@ -27,8 +27,7 @@ If `~/.claude/ziki.md` does not exist, stop and tell the user to run `/ziki-setu
 
 Handle any of the following (infer from context, no user input required):
 
-- **URL**: fetch full page content with `WebFetch`, extract clean text, use page title
-  as filename
+- **URL**: fetch full page content, extract clean text, use page title as filename
 - **File path**: read the file, use its name as filename
 - **Topic / conversation excerpt**: synthesize a draft page from current session context
 - **Combination**: a URL discussed in context plus surrounding analysis
@@ -59,10 +58,53 @@ status: inbox
 Content here.
 ```
 
-6. **Write the file** to the vault using the access method from `~/.claude/ziki.md`:
-   - `_inbox/<filename>.md` (new file)
+6. **Cache reference material** (when filing a URL or external source): if the content
+   is substantial and worth preserving for future verification, save a snapshot to
+   `_refs/`. See "Reference snapshots" below. Add the `_refs/` path to the inbox
+   file's `sources:` field.
+
+7. **Write files** to the vault in a single commit:
+   - `_inbox/<filename>.md`
+   - `_refs/<snapshot>.md` (if caching a reference)
 
    Commit message: `ziki: add to inbox — <title>`
+
+## Reference snapshots (`_refs/`)
+
+When filing content from a URL or external document, you may cache a content snapshot
+in `_refs/` to save bandwidth on future re-fetches and preserve content that might
+disappear.
+
+**When to cache**: substantial articles, documentation pages, or reference material
+that wiki pages will cite as ground truth. Do NOT cache trivial pages, search results,
+or ephemeral content.
+
+**Naming convention**: `<domain>--<kebab-title>.md`
+
+Examples:
+- `docs-nats-io--jetstream-overview.md`
+- `extendedbrain-substack-com--wiki-that-writes-itself.md`
+- `kubernetes-io--pod-lifecycle.md`
+
+**Frontmatter format**:
+
+```markdown
+---
+url: "https://docs.nats.io/nats-concepts/jetstream"
+fetched: YYYY-MM-DD
+content_type: documentation | article | specification | transcript
+---
+
+# Page Title
+
+Extracted content here (clean markdown, not raw HTML).
+```
+
+**Rules for `_refs/`**:
+- Content should be clean, extracted markdown (not raw HTML)
+- Include only the substantive content, not navigation or ads
+- One file per source URL
+- Deduplicate: check `_refs/` before creating a new snapshot
 
 ## Tags
 
