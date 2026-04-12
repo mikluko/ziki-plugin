@@ -48,7 +48,7 @@ hour.
 
 ```bash
 claude plugin marketplace add mikluko/ziki-plugin
-claude plugin install ziki@ziki-plugin
+claude plugin install ziki@ziki
 ```
 
 For development/testing (session-scoped):
