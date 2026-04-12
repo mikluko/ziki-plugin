@@ -6,6 +6,5 @@
     "name": "Mikhail Lukianchenko"
   },
   "commands": "./commands",
-  "skills": "./skills",
-  "hooks": "./hooks/hooks.json"
+  "skills": "./skills"
 }
