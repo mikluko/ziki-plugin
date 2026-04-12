@@ -1,18 +1,6 @@
 {
-  "description": "Autonomously file inbox-worthy content from the session into the Ziki knowledge base",
+  "description": "Capture inbox-worthy content before context compaction in long sessions",
   "hooks": {
-    "Stop": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "agent",
-            "prompt": "Read ~/.claude/ziki.md using the Read tool. If the file does not exist, return {\"ok\": true} immediately.\n\nIf it exists, parse the YAML frontmatter for vault_owner, vault_repo, vault_branch, and read the markdown body for access instructions. You MUST use the access method described in that file for all vault operations. Do NOT write to the local filesystem. Do NOT use ~/Documents/ziki/ or any local path.\n\nReview the conversation. Identify content worth preserving in the Ziki knowledge base: new concepts, URLs, technical findings, research results, decisions.\n\nFor each item worth preserving, use the ziki-add skill. The skill will also read ~/.claude/ziki.md for access instructions.\n\nSkip anything already filed this session, anything trivial, or pure task execution with no durable knowledge.\n\nWhen done, return {\"ok\": true}.",
-            "timeout": 120
-          }
-        ]
-      }
-    ],
     "PreCompact": [
       {
         "matcher": "",
