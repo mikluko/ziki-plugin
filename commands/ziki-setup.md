@@ -16,8 +16,7 @@ Ask the user for their vault repository. They may provide:
 - Or say they don't have one yet
 
 If they don't have a vault repo, offer to create one on GitHub (if you have tools
-to do so). The repo needs at minimum: `_inbox/`, `wiki/_index.md`, `wiki/_log.md`,
-`.manifest.json`, and `AGENTS.md`.
+to do so). See "Bootstrapping a new vault" below.
 
 Ask for the branch (default: `main`).
 
@@ -131,6 +130,70 @@ Tell the user:
 - Which access method is being used
 - That `/ziki-add` and `/ziki-inbox` will now work in this project
 - That hooks (Stop, PreCompact) will auto-capture knowledge from sessions
+
+## Bootstrapping a new vault
+
+If the user doesn't have a vault repo yet, or the repo exists but is empty:
+
+### 1. Create the repo (if needed)
+
+Offer to create a private GitHub repository. Use whatever access method is available.
+
+### 2. Scaffold the vault structure
+
+Push the following files in one commit:
+
+- **`AGENTS.md`**: the agent contract. Use the canonical version from
+  `github.com/mikluko/ziki` as a template (read it during setup). Adapt the title
+  and any repo-specific references.
+- **`wiki/_index.md`**: empty index with a header and placeholder sections
+- **`wiki/_log.md`**: empty log with a header
+- **`.manifest.json`**: empty object `{}`
+- **`_meta/taxonomy.md`**: starter taxonomy with a few universal tags
+- **`_inbox/.gitkeep`**: ensure the directory exists
+
+Commit message: `wiki: initialize vault`
+
+### 3. Suggest a seed topic
+
+An empty wiki is daunting. After scaffolding, suggest a first topic to get the wiki
+started. The goal is to create one real wiki page immediately, so the user sees the
+system working end-to-end.
+
+**How to pick the topic:**
+
+1. Look at what you already know about the user from this session and any accumulated
+   context: their role, domain, current project, technologies they use, problems
+   they're solving, interests they've mentioned.
+
+2. If there's one obvious topic (e.g. the user has been deep in a specific technology
+   or domain all session), suggest it directly:
+   > "Based on our conversation, I'd suggest starting with a page on [topic].
+   > Want me to create it?"
+
+3. If there's no single obvious winner, offer 3-5 concrete topics drawn from what
+   you know, and let the user pick one or more:
+   > "Here are some topics that could seed your wiki based on what I know about
+   > your work:
+   > 1. [Technology X] — you use this daily
+   > 2. [Concept Y] — came up in our discussion
+   > 3. [Tool Z] — central to your workflow
+   > 4. [Domain topic] — your area of expertise
+   >
+   > Pick any that interest you, or suggest your own."
+
+4. If you know nothing about the user yet, suggest they pick a topic they're currently
+   learning or researching, since that's where the wiki pattern adds the most value.
+
+**When the user picks a topic:**
+
+- Use web search to gather current, accurate information
+- Create both an `_inbox/` draft and a promoted `wiki/` page (so the user sees the
+  full pipeline result immediately)
+- Update `wiki/_index.md`, `wiki/_log.md`, and `.manifest.json`
+- Commit and push: `wiki: seed — <topic>`
+
+This gives the user a working wiki with real content from the very first setup.
 
 ## Notes
 
