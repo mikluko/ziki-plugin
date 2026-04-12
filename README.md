@@ -33,8 +33,16 @@ pushes results.
 - **PreCompact**: same logic, triggered before context compaction to preserve knowledge
   that would otherwise be compressed away
 
-Hooks are inactive until `/ziki-setup` has been run. If `.claude/ziki.md` does
+Hooks are inactive until `/ziki-setup` has been run. If `~/.claude/ziki.md` does
 not exist, hooks return immediately without doing anything.
+
+## Scheduled Processing
+
+During setup, the plugin offers to create an hourly remote agent that runs inbox
+processing automatically. This closes the loop: hooks capture knowledge into `_inbox/`
+during sessions, and the scheduled agent promotes it to wiki pages in the background.
+Knowledge captured in one session becomes available as compiled wiki pages within the
+hour.
 
 ## Installation
 

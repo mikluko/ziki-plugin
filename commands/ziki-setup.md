@@ -123,12 +123,77 @@ branch, and sha (for updates).
 Use `mcp__github__push_files` with owner, repo, branch, files array, and message.
 ```
 
-### 5. Confirm
+### 5. Scheduled inbox processing
+
+The wiki only becomes useful once inbox items are processed into wiki pages. The
+Stop/PreCompact hooks capture knowledge into `_inbox/`, but nothing promotes it to
+`wiki/` unless the user runs `/ziki-inbox` manually. Offer to automate this.
+
+Explain to the user:
+
+> "The hooks will capture knowledge from every session into the inbox. To make it
+> available as wiki pages, the inbox needs to be processed regularly. I can set up
+> an hourly background agent that runs `/ziki-inbox` automatically. This way, anything
+> captured in one session becomes searchable wiki content within the hour."
+
+If the user agrees, create a scheduled remote trigger using the `RemoteTrigger` tool
+(load it with `ToolSearch select:RemoteTrigger`).
+
+**Trigger configuration:**
+
+- **Name**: `ziki-inbox`
+- **Schedule**: `0 * * * *` (every hour). The user may prefer a different frequency;
+  ask if hourly works.
+- **Repo**: the vault repository URL (e.g. `https://github.com/mikluko/ziki`)
+- **Model**: `claude-sonnet-4-6` (cost-effective for routine processing)
+- **Environment**: ask the user which environment to use from their available list
+- **Allowed tools**: `Bash`, `Read`, `Write`, `Edit`, `Glob`, `Grep`, `WebFetch`,
+  `WebSearch`
+
+**Prompt for the remote agent** (must be self-contained since the agent starts with
+zero context):
+
+> Process the Ziki knowledge base inbox.
+>
+> This is a Ziki vault: an AI-managed knowledge base. The repo contains `_inbox/`
+> (raw drafts), `wiki/` (compiled wiki pages), and supporting files.
+>
+> Steps:
+> 1. Read `AGENTS.md` for the vault contract, page format, and hard rules.
+> 2. Read `.manifest.json` to find which `_inbox/` files are already processed.
+> 3. List `_inbox/` and identify unprocessed files.
+> 4. If there are no unprocessed files, exit with a message "No new inbox items."
+> 5. For each unprocessed file:
+>    a. Read and classify it (raw source vs draft page).
+>    b. Assess quality: reject if too thin, unclear, or near-duplicate.
+>    c. Search `wiki/` for related pages. Use web search to verify facts and fill gaps.
+>    d. Create or update `wiki/` pages with complete frontmatter, `> [!abstract]`
+>       callout, `[[wikilinks]]`, and provenance markers (`^[inferred]`, etc.).
+>    e. Prefer updating existing pages over creating near-duplicates.
+> 6. Update `.manifest.json`, `wiki/_index.md`, and `wiki/_log.md`.
+> 7. Commit and push: `wiki: process inbox [YYYY-MM-DD] — N promoted, M rejected`
+>
+> Hard rules: never edit `_inbox/` content (only frontmatter status), never invent
+> sources, always use provenance markers, always log to `wiki/_log.md`.
+
+If the trigger is created successfully, store the trigger ID in `~/.claude/ziki.md`
+by adding `trigger_id: <id>` to the YAML frontmatter.
+
+**Prerequisites**: remind the user that the remote agent needs GitHub access to the
+vault repo. They should run `/web-setup` or install the Claude GitHub App on the repo.
+If MCP connectors are needed for web search during enrichment, point them to
+https://claude.ai/settings/connectors.
+
+If the user declines automatic scheduling, that's fine. They can always run `/ziki-inbox`
+manually or set it up later.
+
+### 6. Confirm
 
 Tell the user:
 - Which vault repo is configured
 - Which access method is being used
-- That `/ziki-add` and `/ziki-inbox` will now work in this project
+- Whether scheduled processing is active (and at what frequency)
+- That `/ziki-add` and `/ziki-inbox` are available for manual use
 - That hooks (Stop, PreCompact) will auto-capture knowledge from sessions
 
 ## Bootstrapping a new vault
