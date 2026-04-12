@@ -7,7 +7,7 @@ operation. No human review is needed.
 
 ## Vault configuration
 
-Read `.claude/ziki.local.md` in the current project directory. This file contains:
+Read `~/.claude/ziki.md` (user-level settings). This file contains:
 - YAML frontmatter with `vault_owner`, `vault_repo`, `vault_branch`
 - Markdown body with vault access instructions (how to read and write files)
 

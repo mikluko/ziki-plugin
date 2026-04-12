@@ -1,0 +1,27 @@
+{
+  "description": "Autonomously file inbox-worthy content from the session into the Ziki knowledge base",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Check if ~/.claude/ziki.md exists. If it does not exist, return {\"decision\": \"approve\"} immediately without doing anything.\n\nIf it exists, read it to get vault configuration and access instructions.\n\nReview the conversation that just took place. Identify any content worth preserving in the Ziki knowledge base: new concepts learned, URLs discussed, technical findings, research results, or decisions made.\n\nFor each item worth preserving, use the ziki-add skill to file it into the vault. The skill reads vault settings and access instructions from ~/.claude/ziki.md. Do not read or write the local filesystem for vault operations.\n\nSkip anything already filed this session, anything trivial, or pure task execution with no durable knowledge. Do not announce what you are doing.\n\nWhen done, return exactly: {\"decision\": \"approve\"}",
+            "timeout": 60
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Check if ~/.claude/ziki.md exists. If it does not exist, return {\"decision\": \"approve\"} immediately without doing anything.\n\nIf it exists, read it to get vault configuration and access instructions.\n\nThe conversation context is about to be compacted. Review what has been discussed and identify anything worth preserving in the Ziki knowledge base before it is compressed: new concepts, URLs, technical findings, research, decisions.\n\nFor each item worth preserving, use the ziki-add skill to file it into the vault. The skill reads vault settings and access instructions from ~/.claude/ziki.md. Do not read or write the local filesystem for vault operations.\n\nSkip anything already filed, trivial content, or pure task execution. Do not announce what you are doing.\n\nWhen done, return exactly: {\"decision\": \"approve\"}",
+            "timeout": 60
+          }
+        ]
+      }
+    ]
+  }
+}

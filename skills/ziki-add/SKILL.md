@@ -13,7 +13,7 @@ autonomously (Stop/PreCompact hooks).
 
 ## Vault configuration
 
-Read `.claude/ziki.local.md` in the current project directory. This file contains:
+Read `~/.claude/ziki.md` (user-level settings). This file contains:
 - YAML frontmatter with `vault_owner`, `vault_repo`, `vault_branch`
 - Markdown body with vault access instructions (how to read and write files)
 
@@ -35,7 +35,7 @@ Handle any of the following (infer from context, no user input required):
 
 ## How to file
 
-1. **Read settings**: parse `.claude/ziki.local.md` for vault config and access method
+1. **Read settings**: parse `~/.claude/ziki.md` for vault config and access method
 2. **Determine content**: fetch URL if needed, read file if needed, or synthesize from
    conversation
 3. **Deduplicate**: read `wiki/_index.md` and list `_inbox/` directory from the vault.

@@ -13,7 +13,7 @@ asks questions.
 ### `/ziki-setup`
 
 Configure the vault repository for this project. Asks for the GitHub `owner/repo` and
-branch, verifies access, and writes settings to `.claude/ziki.local.md`.
+branch, verifies access, and writes settings to `.claude/ziki.md`.
 
 ### `/ziki-add`
 
@@ -33,7 +33,7 @@ pushes results.
 - **PreCompact**: same logic, triggered before context compaction to preserve knowledge
   that would otherwise be compressed away
 
-Hooks are inactive until `/ziki-setup` has been run. If `.claude/ziki.local.md` does
+Hooks are inactive until `/ziki-setup` has been run. If `.claude/ziki.md` does
 not exist, hooks return immediately without doing anything.
 
 ## Installation
@@ -56,7 +56,7 @@ will:
 1. Ask for your vault repository (`owner/repo` and branch)
 2. Discover how to access it (GitHub MCP tools, `gh` CLI, `git` CLI, or custom)
 3. Test that read access works
-4. Write `.claude/ziki.local.md` with vault config and access instructions
+4. Write `.claude/ziki.md` with vault config and access instructions
 
 The settings file stores both the repo coordinates (in YAML frontmatter) and the
 tested access instructions (in the markdown body) that all other commands follow.
@@ -73,7 +73,7 @@ vault_branch: main
 (access method details written by /ziki-setup)
 ```
 
-The settings file is project-local and should not be committed to git.
+The settings file is user-level, shared across all projects.
 
 ### Prerequisites
 
@@ -87,7 +87,7 @@ You need some way for Claude to access a GitHub repository. Any of these work:
 
 All vault access goes through the remote git repository, never the local filesystem.
 The specific access method is configured per-project during `/ziki-setup` and stored
-in `.claude/ziki.local.md`. This makes the plugin work regardless of which tools are
+in `~/.claude/ziki.md`. This makes the plugin work regardless of which tools are
 available in the user's environment.
 
 ### Vault structure

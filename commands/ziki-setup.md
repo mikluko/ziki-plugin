@@ -51,7 +51,7 @@ Do not proceed until read access is confirmed.
 
 ### 4. Write settings
 
-Write `.claude/ziki.local.md` in the current project directory with:
+Write `~/.claude/ziki.md` (user-level settings) with:
 - YAML frontmatter: `vault_owner`, `vault_repo`, `vault_branch`
 - Markdown body: access instructions that other Ziki commands will follow
 
@@ -134,8 +134,8 @@ Tell the user:
 
 ## Notes
 
-- If `.claude/ziki.local.md` already exists, show current settings and ask whether
+- If `~/.claude/ziki.md` already exists, show current settings and ask whether
   to update them.
-- The settings file is local to this project and should not be committed to git.
+- The settings file is user-level (`~/.claude/`), shared across all projects.
 - Tailor the access instructions to exactly what was tested and confirmed working.
   Do not include methods that weren't verified.
