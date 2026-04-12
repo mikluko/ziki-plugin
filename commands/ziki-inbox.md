@@ -62,7 +62,23 @@ For files that pass assessment:
 - **Identify ground truth sources**: find authoritative URLs for the topic (official
   docs, specifications, primary sources). These go into the `ground_truth:` field.
 
-### 4. Promote
+### 4. Re-verify before writing
+
+**Before creating or updating any wiki page**, re-verify the claims you are about to
+write against the page's `ground_truth:` sources:
+
+- If the page already exists and has `ground_truth:` URLs, fetch them (or read from
+  `_refs/` if cached) and compare the incoming content against them.
+- If creating a new page, fetch the ground truth URLs you identified in step 3 and
+  verify your synthesis is consistent with them.
+- If a claim contradicts a ground truth source, do NOT write it. Mark it with
+  `^[ambiguous]` and note the discrepancy.
+- If a ground truth URL is unreachable, note `^[stale]` on claims that depend on it.
+
+This prevents error propagation: each write is anchored to authoritative sources,
+not just to other wiki pages or inbox drafts.
+
+### 5. Promote
 
 Create or update `wiki/` pages following this format:
 
@@ -114,7 +130,7 @@ appropriate. Prefer updating an existing page over creating a near-duplicate.
 **Draft pages** should be refined and expanded to full wiki quality: complete
 frontmatter, verified facts, wikilinks, provenance markers.
 
-### 5. Cache reference material
+### 6. Cache reference material
 
 When you fetch a URL during enrichment that serves as ground truth for a wiki page,
 consider caching it in `_refs/` to preserve the content and save future bandwidth.
@@ -140,7 +156,7 @@ first to avoid duplicates.
 When a `_refs/` snapshot is created, use the `_refs/` path in the wiki page's
 `ground_truth:` field alongside the original URL.
 
-### 6. Clean up inbox
+### 7. Clean up inbox
 
 After promoting an inbox file, you may:
 - **Delete it** if all its content has been fully absorbed into wiki pages
@@ -150,7 +166,7 @@ After promoting an inbox file, you may:
 
 The inbox is a mutable staging area. Do not treat it as an archive.
 
-### 7. Update supporting files
+### 8. Update supporting files
 
 After processing all files, prepare updates to:
 
@@ -159,7 +175,7 @@ After processing all files, prepare updates to:
 2. **`wiki/_index.md`**: add new promoted pages to the hand-curated map under the
    appropriate section
 
-### 8. Commit and push
+### 9. Commit and push
 
 Write all changes to the vault in a single commit (follow the write instructions from
 `~/.claude/ziki.md`):
