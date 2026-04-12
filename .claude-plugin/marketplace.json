@@ -9,7 +9,7 @@
     {
       "name": "ziki",
       "description": "AI-managed personal knowledge base with Zettelkasten-inspired wiki. Autonomously captures, enriches, and organizes knowledge from conversations into a persistent, interlinked markdown wiki.",
-      "version": "1.5.1",
+      "version": "1.6.0",
       "author": {
         "name": "Mikhail Lukianchenko"
       },

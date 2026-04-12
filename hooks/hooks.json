@@ -6,8 +6,8 @@
         "matcher": "",
         "hooks": [
           {
-            "type": "prompt",
-            "prompt": "IMPORTANT: Your ONLY text output must be the JSON object at the end. Do not output any other text.\n\nUse the Read tool to read ~/.claude/ziki.md. If the file does not exist, output ONLY: {\"decision\": \"approve\"}\n\nIf it exists, parse the YAML frontmatter for vault_owner, vault_repo, vault_branch, and read the markdown body for access instructions. You MUST use the access method described in that file for all vault operations. Do NOT write to the local filesystem. Do NOT use ~/Documents/ziki/ or any local path.\n\nReview the conversation. Identify content worth preserving in the Ziki knowledge base: new concepts, URLs, technical findings, research results, decisions.\n\nFor each item worth preserving, use the ziki-add skill. The skill will also read ~/.claude/ziki.md for access instructions.\n\nSkip anything already filed this session, anything trivial, or pure task execution with no durable knowledge.\n\nAfter all tool calls are complete, output ONLY this JSON object and nothing else:\n{\"decision\": \"approve\"}",
+            "type": "agent",
+            "prompt": "Read ~/.claude/ziki.md using the Read tool. If the file does not exist, return {\"ok\": true} immediately.\n\nIf it exists, parse the YAML frontmatter for vault_owner, vault_repo, vault_branch, and read the markdown body for access instructions. You MUST use the access method described in that file for all vault operations. Do NOT write to the local filesystem. Do NOT use ~/Documents/ziki/ or any local path.\n\nReview the conversation. Identify content worth preserving in the Ziki knowledge base: new concepts, URLs, technical findings, research results, decisions.\n\nFor each item worth preserving, use the ziki-add skill. The skill will also read ~/.claude/ziki.md for access instructions.\n\nSkip anything already filed this session, anything trivial, or pure task execution with no durable knowledge.\n\nWhen done, return {\"ok\": true}.",
             "timeout": 120
           }
         ]
@@ -18,8 +18,8 @@
         "matcher": "",
         "hooks": [
           {
-            "type": "prompt",
-            "prompt": "IMPORTANT: Your ONLY text output must be the JSON object at the end. Do not output any other text.\n\nUse the Read tool to read ~/.claude/ziki.md. If the file does not exist, output ONLY: {\"decision\": \"approve\"}\n\nIf it exists, parse the YAML frontmatter for vault_owner, vault_repo, vault_branch, and read the markdown body for access instructions. You MUST use the access method described in that file for all vault operations. Do NOT write to the local filesystem. Do NOT use ~/Documents/ziki/ or any local path.\n\nThe conversation context is about to be compacted. Identify anything worth preserving in the Ziki knowledge base before it is compressed: new concepts, URLs, technical findings, research, decisions.\n\nFor each item worth preserving, use the ziki-add skill. The skill will also read ~/.claude/ziki.md for access instructions.\n\nSkip anything already filed, trivial content, or pure task execution.\n\nAfter all tool calls are complete, output ONLY this JSON object and nothing else:\n{\"decision\": \"approve\"}",
+            "type": "agent",
+            "prompt": "Read ~/.claude/ziki.md using the Read tool. If the file does not exist, return {\"ok\": true} immediately.\n\nIf it exists, parse the YAML frontmatter for vault_owner, vault_repo, vault_branch, and read the markdown body for access instructions. You MUST use the access method described in that file for all vault operations. Do NOT write to the local filesystem. Do NOT use ~/Documents/ziki/ or any local path.\n\nThe conversation context is about to be compacted. Identify anything worth preserving in the Ziki knowledge base before it is compressed: new concepts, URLs, technical findings, research, decisions.\n\nFor each item worth preserving, use the ziki-add skill. The skill will also read ~/.claude/ziki.md for access instructions.\n\nSkip anything already filed, trivial content, or pure task execution.\n\nWhen done, return {\"ok\": true}.",
             "timeout": 120
           }
         ]
