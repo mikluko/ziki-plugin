@@ -1,0 +1,2 @@
+# Override global .* exclusion for plugin manifests
+!.claude-plugin/
