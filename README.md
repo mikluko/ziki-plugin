@@ -37,7 +37,7 @@ claude plugin install ziki@mikluko/ziki-plugin
 For development/testing (session-scoped):
 
 ```bash
-claude --plugin-dir /path/to/ziki-plugin/plugins/ziki
+claude --plugin-dir /path/to/ziki-plugin
 ```
 
 ## Configuration

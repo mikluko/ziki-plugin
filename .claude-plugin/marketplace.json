@@ -13,7 +13,7 @@
       "author": {
         "name": "Mikhail Lukianchenko"
       },
-      "source": "plugins/ziki/",
+      "source": "./",
       "category": "productivity",
       "homepage": "https://github.com/mikluko/ziki-plugin"
     }
