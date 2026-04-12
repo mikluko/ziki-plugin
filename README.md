@@ -39,7 +39,8 @@ not exist, hooks return immediately without doing anything.
 ## Installation
 
 ```bash
-claude plugin install ziki@mikluko/ziki-plugin
+claude plugin marketplace add mikluko/ziki-plugin
+claude plugin install ziki@ziki-plugin
 ```
 
 For development/testing (session-scoped):
