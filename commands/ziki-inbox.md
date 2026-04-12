@@ -5,19 +5,26 @@ description: Process pending files in the Ziki knowledge base inbox, enrich with
 Process all pending files in `_inbox/` of the Ziki vault. This is a fully autonomous
 operation. No human review is needed.
 
+## Vault configuration
+
+Read `.claude/ziki.local.md` in the current project directory to get vault settings.
+Parse the YAML frontmatter to extract `vault_owner`, `vault_repo`, and `vault_branch`.
+
+If the file does not exist, stop and tell the user to run `/ziki-setup` first.
+
 ## Vault access
 
 All reads and writes go through the **remote git repository**, never the local
-filesystem. The vault repo is `mikluko/ziki` on GitHub, branch `main`.
+filesystem. Use `vault_owner` and `vault_repo` from settings for all GitHub API calls.
 
-**Reading files**: use `mcp__github__get_file_contents` with `owner: "mikluko"`,
-`repo: "ziki"`.
+**Reading files**: use `mcp__github__get_file_contents` with owner and repo from
+settings.
 
-**Writing files**: use `mcp__github__push_files` to push all changes in a single
-commit at the end.
+**Writing files**: use `mcp__github__push_files` with branch from settings to push
+all changes in a single commit at the end.
 
 **Fallback** (if GitHub MCP tools are unavailable): use `gh api` CLI against
-`repos/mikluko/ziki/contents/<path>`.
+`repos/<owner>/<repo>/contents/<path>`.
 
 ## Setup
 
@@ -126,7 +133,8 @@ After processing all files, prepare updates to:
 
 ### 6. Commit and push
 
-Push all changes in a single commit using `mcp__github__push_files`:
+Push all changes in a single commit using `mcp__github__push_files` with branch from
+settings:
 
 - All new/updated `wiki/` pages
 - Updated `_inbox/` files (frontmatter status changes only)

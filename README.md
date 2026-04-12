@@ -10,6 +10,11 @@ asks questions.
 
 ## Commands
 
+### `/ziki-setup`
+
+Configure the vault repository for this project. Asks for the GitHub `owner/repo` and
+branch, verifies access, and writes settings to `.claude/ziki.local.md`.
+
 ### `/ziki-add`
 
 File content from the current conversation into the vault inbox. Handles URLs, file
@@ -28,6 +33,9 @@ pushes results.
 - **PreCompact**: same logic, triggered before context compaction to preserve knowledge
   that would otherwise be compressed away
 
+Hooks are inactive until `/ziki-setup` has been run. If `.claude/ziki.local.md` does
+not exist, hooks return immediately without doing anything.
+
 ## Installation
 
 ```bash
@@ -42,8 +50,18 @@ claude --plugin-dir /path/to/ziki-plugin
 
 ## Configuration
 
-The vault repository is currently hardcoded to `github.com/mikluko/ziki`. Future
-versions will make this configurable.
+After installing, run `/ziki-setup` in any project where you want Ziki active. This
+creates `.claude/ziki.local.md` with your vault settings:
+
+```markdown
+---
+vault_owner: mikluko
+vault_repo: ziki
+vault_branch: main
+---
+```
+
+The settings file is project-local and should not be committed to git.
 
 ### Prerequisites
 

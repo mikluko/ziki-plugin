@@ -11,28 +11,46 @@ File content into the Ziki knowledge base inbox via the remote vault repository.
 This skill is used both explicitly (user request or `/ziki-add` command) and
 autonomously (Stop/PreCompact hooks).
 
+## Vault configuration
+
+Read `.claude/ziki.local.md` in the current project directory to get vault settings.
+Parse the YAML frontmatter to extract `vault_owner`, `vault_repo`, and `vault_branch`.
+
+If the file does not exist, stop and tell the user to run `/ziki-setup` first.
+
+Example settings file:
+
+```markdown
+---
+vault_owner: mikluko
+vault_repo: ziki
+vault_branch: main
+---
+```
+
 ## Vault access
 
 All reads and writes go through the **remote git repository**, never the local
-filesystem. The vault repo is `mikluko/ziki` on GitHub, branch `main`.
+filesystem.
 
 ### How to read vault files
 
-Use `mcp__github__get_file_contents` with `owner: "mikluko"`, `repo: "ziki"`, and
+Use `mcp__github__get_file_contents` with `owner` and `repo` from settings, and
 the file path. Example: read `wiki/_index.md` to check for duplicates.
 
 ### How to write vault files
 
 Use `mcp__github__push_files` to write multiple files in a single commit, or
-`mcp__github__create_or_update_file` for a single file.
+`mcp__github__create_or_update_file` for a single file. Use `branch` from settings.
 
 When updating an existing file, you must provide its SHA. Get it from the
 `get_file_contents` response.
 
 ### Fallback
 
-If GitHub MCP tools are unavailable, use `gh api repos/mikluko/ziki/contents/<path>`
-for reads and `gh api -X PUT repos/mikluko/ziki/contents/<path>` for writes.
+If GitHub MCP tools are unavailable, use `gh api repos/<owner>/<repo>/contents/<path>`
+for reads and `gh api -X PUT repos/<owner>/<repo>/contents/<path>` for writes,
+substituting owner and repo from settings.
 
 ## Input sources
 
@@ -46,12 +64,13 @@ Handle any of the following (infer from context, no user input required):
 
 ## How to file
 
-1. **Determine content**: fetch URL if needed, read file if needed, or synthesize from
+1. **Read settings**: parse `.claude/ziki.local.md` for vault owner, repo, and branch
+2. **Determine content**: fetch URL if needed, read file if needed, or synthesize from
    conversation
-2. **Deduplicate**: read `wiki/_index.md` and list `_inbox/` directory via
+3. **Deduplicate**: read `wiki/_index.md` and list `_inbox/` directory via
    `mcp__github__get_file_contents`. If a near-duplicate exists, skip silently.
-3. **Choose filename**: `<kebab-case-title>.md` (short, descriptive, no dates)
-4. **Prepare the inbox file** with this format:
+4. **Choose filename**: `<kebab-case-title>.md` (short, descriptive, no dates)
+5. **Prepare the inbox file** with this format:
 
 ```markdown
 ---
@@ -68,14 +87,14 @@ status: inbox
 Content here.
 ```
 
-5. **Read current `wiki/_log.md`** to get its SHA for updating
-6. **Push both files** using `mcp__github__push_files`:
+6. **Read current `wiki/_log.md`** to get its SHA for updating
+7. **Push both files** using `mcp__github__push_files` with branch from settings:
    - `_inbox/<filename>.md` (new file)
    - `wiki/_log.md` (append: `## [YYYY-MM-DD] inbox | <title>`)
 
    Commit message: `ziki: add to inbox — <title>`
 
-7. **Do not** commit separately or push separately. Use a single `push_files` call.
+8. **Do not** commit separately or push separately. Use a single `push_files` call.
 
 ## Tags
 
