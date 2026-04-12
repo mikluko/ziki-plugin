@@ -7,24 +7,14 @@ operation. No human review is needed.
 
 ## Vault configuration
 
-Read `.claude/ziki.local.md` in the current project directory to get vault settings.
-Parse the YAML frontmatter to extract `vault_owner`, `vault_repo`, and `vault_branch`.
+Read `.claude/ziki.local.md` in the current project directory. This file contains:
+- YAML frontmatter with `vault_owner`, `vault_repo`, `vault_branch`
+- Markdown body with vault access instructions (how to read and write files)
 
 If the file does not exist, stop and tell the user to run `/ziki-setup` first.
 
-## Vault access
-
-All reads and writes go through the **remote git repository**, never the local
-filesystem. Use `vault_owner` and `vault_repo` from settings for all GitHub API calls.
-
-**Reading files**: use `mcp__github__get_file_contents` with owner and repo from
-settings.
-
-**Writing files**: use `mcp__github__push_files` with branch from settings to push
-all changes in a single commit at the end.
-
-**Fallback** (if GitHub MCP tools are unavailable): use `gh api` CLI against
-`repos/<owner>/<repo>/contents/<path>`.
+**Follow the access instructions in the markdown body exactly.** They describe which
+tools or CLI commands to use for reading and writing vault files.
 
 ## Setup
 
@@ -67,8 +57,8 @@ frontmatter status fields.
 
 For files that pass assessment:
 - Search `wiki/` for related pages (read directory listing, then relevant files)
-- For draft pages: use `perplexity_ask` or web search to verify facts, fill gaps, and
-  find current information (drafts are often written from memory and may be stale)
+- For draft pages: use web search to verify facts, fill gaps, and find current
+  information (drafts are often written from memory and may be stale)
 - For raw sources: identify all concepts and entities; determine which existing wiki
   pages to update and which new pages to create
 - Identify wikilinks the content missed; find connections to existing pages
@@ -133,8 +123,8 @@ After processing all files, prepare updates to:
 
 ### 6. Commit and push
 
-Push all changes in a single commit using `mcp__github__push_files` with branch from
-settings:
+Write all changes to the vault in a single commit (follow the write instructions from
+settings):
 
 - All new/updated `wiki/` pages
 - Updated `_inbox/` files (frontmatter status changes only)
@@ -152,4 +142,4 @@ Commit message: `wiki: process inbox [YYYY-MM-DD] — N promoted, M rejected`
 - **NEVER** create a near-duplicate wiki page (update the existing one instead)
 - **ALWAYS** use provenance markers: `^[inferred]`, `^[ambiguous]`, `^[stale]`
 - **ALWAYS** log every file processed to `wiki/_log.md`
-- **ALWAYS** push all changes in a single commit at the end
+- **ALWAYS** write all changes in a single commit at the end

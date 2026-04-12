@@ -13,44 +13,15 @@ autonomously (Stop/PreCompact hooks).
 
 ## Vault configuration
 
-Read `.claude/ziki.local.md` in the current project directory to get vault settings.
-Parse the YAML frontmatter to extract `vault_owner`, `vault_repo`, and `vault_branch`.
+Read `.claude/ziki.local.md` in the current project directory. This file contains:
+- YAML frontmatter with `vault_owner`, `vault_repo`, `vault_branch`
+- Markdown body with vault access instructions (how to read and write files)
 
 If the file does not exist, stop and tell the user to run `/ziki-setup` first.
 
-Example settings file:
-
-```markdown
----
-vault_owner: mikluko
-vault_repo: ziki
-vault_branch: main
----
-```
-
-## Vault access
-
-All reads and writes go through the **remote git repository**, never the local
-filesystem.
-
-### How to read vault files
-
-Use `mcp__github__get_file_contents` with `owner` and `repo` from settings, and
-the file path. Example: read `wiki/_index.md` to check for duplicates.
-
-### How to write vault files
-
-Use `mcp__github__push_files` to write multiple files in a single commit, or
-`mcp__github__create_or_update_file` for a single file. Use `branch` from settings.
-
-When updating an existing file, you must provide its SHA. Get it from the
-`get_file_contents` response.
-
-### Fallback
-
-If GitHub MCP tools are unavailable, use `gh api repos/<owner>/<repo>/contents/<path>`
-for reads and `gh api -X PUT repos/<owner>/<repo>/contents/<path>` for writes,
-substituting owner and repo from settings.
+**Follow the access instructions in the markdown body exactly.** They describe which
+tools or CLI commands to use for reading and writing vault files. These instructions
+were tested during setup and are specific to the user's environment.
 
 ## Input sources
 
@@ -64,11 +35,11 @@ Handle any of the following (infer from context, no user input required):
 
 ## How to file
 
-1. **Read settings**: parse `.claude/ziki.local.md` for vault owner, repo, and branch
+1. **Read settings**: parse `.claude/ziki.local.md` for vault config and access method
 2. **Determine content**: fetch URL if needed, read file if needed, or synthesize from
    conversation
-3. **Deduplicate**: read `wiki/_index.md` and list `_inbox/` directory via
-   `mcp__github__get_file_contents`. If a near-duplicate exists, skip silently.
+3. **Deduplicate**: read `wiki/_index.md` and list `_inbox/` directory from the vault.
+   If a near-duplicate exists, skip silently.
 4. **Choose filename**: `<kebab-case-title>.md` (short, descriptive, no dates)
 5. **Prepare the inbox file** with this format:
 
@@ -87,14 +58,13 @@ status: inbox
 Content here.
 ```
 
-6. **Read current `wiki/_log.md`** to get its SHA for updating
-7. **Push both files** using `mcp__github__push_files` with branch from settings:
+6. **Read current `wiki/_log.md`** from the vault
+7. **Write both files** to the vault in a single commit (follow the write instructions
+   from settings):
    - `_inbox/<filename>.md` (new file)
    - `wiki/_log.md` (append: `## [YYYY-MM-DD] inbox | <title>`)
 
    Commit message: `ziki: add to inbox — <title>`
-
-8. **Do not** commit separately or push separately. Use a single `push_files` call.
 
 ## Tags
 

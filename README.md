@@ -50,8 +50,16 @@ claude --plugin-dir /path/to/ziki-plugin
 
 ## Configuration
 
-After installing, run `/ziki-setup` in any project where you want Ziki active. This
-creates `.claude/ziki.local.md` with your vault settings:
+After installing, run `/ziki-setup` in any project where you want Ziki active. Setup
+will:
+
+1. Ask for your vault repository (`owner/repo` and branch)
+2. Discover how to access it (GitHub MCP tools, `gh` CLI, `git` CLI, or custom)
+3. Test that read access works
+4. Write `.claude/ziki.local.md` with vault config and access instructions
+
+The settings file stores both the repo coordinates (in YAML frontmatter) and the
+tested access instructions (in the markdown body) that all other commands follow.
 
 ```markdown
 ---
@@ -59,21 +67,28 @@ vault_owner: mikluko
 vault_repo: ziki
 vault_branch: main
 ---
+
+# Vault Access Instructions
+
+(access method details written by /ziki-setup)
 ```
 
 The settings file is project-local and should not be committed to git.
 
 ### Prerequisites
 
-- GitHub MCP server configured (preferred access method)
-- Alternatively, `gh` CLI authenticated with access to the vault repository
+You need some way for Claude to access a GitHub repository. Any of these work:
+- GitHub MCP server
+- `gh` CLI (authenticated)
+- `git` CLI with SSH or HTTPS credentials
+- Any other method you can describe to `/ziki-setup`
 
 ## Architecture
 
-All vault access goes through the remote git repository via GitHub MCP tools
-(`mcp__github__get_file_contents`, `mcp__github__push_files`, etc.). The plugin never
-touches the local filesystem for vault operations. This makes it work from Claude
-Desktop, Claude Code CLI, and Claude Mobile.
+All vault access goes through the remote git repository, never the local filesystem.
+The specific access method is configured per-project during `/ziki-setup` and stored
+in `.claude/ziki.local.md`. This makes the plugin work regardless of which tools are
+available in the user's environment.
 
 ### Vault structure
 
