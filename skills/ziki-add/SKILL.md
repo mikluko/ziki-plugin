@@ -1,7 +1,7 @@
 ---
 name: ziki-add
 description: This skill should be used when the user asks to "add to ziki", "save to ziki", "file this in ziki", "add to inbox", or "save this to the knowledge base". Also used internally by the Stop and PreCompact hooks to autonomously file inbox-worthy content from the current session.
-version: 1.0.0
+version: 1.1.0
 ---
 
 # Ziki Add
@@ -11,17 +11,17 @@ File content into the Ziki knowledge base inbox via the remote vault repository.
 This skill is used both explicitly (user request or `/ziki-add` command) and
 autonomously (Stop/PreCompact hooks).
 
-## Vault configuration
+## CRITICAL: vault access method
 
-Read `~/.claude/ziki.md` (user-level settings). This file contains:
-- YAML frontmatter with `vault_owner`, `vault_repo`, `vault_branch`
-- Markdown body with vault access instructions (how to read and write files)
+**You MUST read `~/.claude/ziki.md` FIRST, before doing anything else.** This file
+contains the vault repository coordinates (YAML frontmatter) and the exact tools or
+commands to use for reading and writing vault files (markdown body).
 
-If the file does not exist, stop and tell the user to run `/ziki-setup` first.
+**Do NOT write to the local filesystem.** The vault is a remote git repository. Even
+if you see a local checkout of the vault (e.g. `~/Documents/ziki/`), do not use it.
+All reads and writes go through the remote access method described in `~/.claude/ziki.md`.
 
-**Follow the access instructions in the markdown body exactly.** They describe which
-tools or CLI commands to use for reading and writing vault files. These instructions
-were tested during setup and are specific to the user's environment.
+If `~/.claude/ziki.md` does not exist, stop and tell the user to run `/ziki-setup`.
 
 ## Input sources
 
@@ -35,11 +35,12 @@ Handle any of the following (infer from context, no user input required):
 
 ## How to file
 
-1. **Read settings**: parse `~/.claude/ziki.md` for vault config and access method
+1. **Read `~/.claude/ziki.md`**: parse frontmatter for vault coordinates, read body
+   for access instructions
 2. **Determine content**: fetch URL if needed, read file if needed, or synthesize from
    conversation
-3. **Deduplicate**: read `wiki/_index.md` and list `_inbox/` directory from the vault.
-   If a near-duplicate exists, skip silently.
+3. **Deduplicate**: read `wiki/_index.md` and list `_inbox/` directory from the vault
+   (using the remote access method). If a near-duplicate exists, skip silently.
 4. **Choose filename**: `<kebab-case-title>.md` (short, descriptive, no dates)
 5. **Prepare the inbox file** with this format:
 
@@ -58,11 +59,8 @@ status: inbox
 Content here.
 ```
 
-6. **Read current `wiki/_log.md`** from the vault
-7. **Write both files** to the vault in a single commit (follow the write instructions
-   from settings):
+6. **Write the file** to the vault using the access method from `~/.claude/ziki.md`:
    - `_inbox/<filename>.md` (new file)
-   - `wiki/_log.md` (append: `## [YYYY-MM-DD] inbox | <title>`)
 
    Commit message: `ziki: add to inbox — <title>`
 
@@ -76,6 +74,7 @@ a new tag is clearly needed.
 - **NEVER** prompt the user for confirmation or input
 - **NEVER** announce what you are doing unless the user explicitly invoked `/ziki-add`
 - **NEVER** read or write the local filesystem for vault operations
+- **NEVER** use `~/Documents/ziki/` or any other local path
 - **NEVER** invent sources or citations
 - If content is too thin (stub, one-liner with no substance), skip silently
 - One `_inbox/` file per distinct concept; do not bundle unrelated things

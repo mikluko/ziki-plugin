@@ -170,11 +170,11 @@ zero context):
 >    d. Create or update `wiki/` pages with complete frontmatter, `> [!abstract]`
 >       callout, `[[wikilinks]]`, and provenance markers (`^[inferred]`, etc.).
 >    e. Prefer updating existing pages over creating near-duplicates.
-> 6. Update `.manifest.json`, `wiki/_index.md`, and `wiki/_log.md`.
+> 6. Update `.manifest.json` and `wiki/_index.md`.
 > 7. Commit and push: `wiki: process inbox [YYYY-MM-DD] — N promoted, M rejected`
 >
 > Hard rules: never edit `_inbox/` content (only frontmatter status), never invent
-> sources, always use provenance markers, always log to `wiki/_log.md`.
+> sources, always use provenance markers.
 
 If the trigger is created successfully, store the trigger ID in `~/.claude/ziki.md`
 by adding `trigger_id: <id>` to the YAML frontmatter.
@@ -212,7 +212,6 @@ Push the following files in one commit:
   `github.com/mikluko/ziki` as a template (read it during setup). Adapt the title
   and any repo-specific references.
 - **`wiki/_index.md`**: empty index with a header and placeholder sections
-- **`wiki/_log.md`**: empty log with a header
 - **`.manifest.json`**: empty object `{}`
 - **`_meta/taxonomy.md`**: starter taxonomy with a few universal tags
 - **`_inbox/.gitkeep`**: ensure the directory exists
@@ -255,7 +254,7 @@ system working end-to-end.
 - Use web search to gather current, accurate information
 - Create both an `_inbox/` draft and a promoted `wiki/` page (so the user sees the
   full pipeline result immediately)
-- Update `wiki/_index.md`, `wiki/_log.md`, and `.manifest.json`
+- Update `wiki/_index.md` and `.manifest.json`
 - Commit and push: `wiki: seed — <topic>`
 
 This gives the user a working wiki with real content from the very first setup.

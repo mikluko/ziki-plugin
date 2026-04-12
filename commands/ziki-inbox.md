@@ -5,16 +5,17 @@ description: Process pending files in the Ziki knowledge base inbox, enrich with
 Process all pending files in `_inbox/` of the Ziki vault. This is a fully autonomous
 operation. No human review is needed.
 
-## Vault configuration
+## CRITICAL: vault access method
 
-Read `~/.claude/ziki.md` (user-level settings). This file contains:
-- YAML frontmatter with `vault_owner`, `vault_repo`, `vault_branch`
-- Markdown body with vault access instructions (how to read and write files)
+**You MUST read `~/.claude/ziki.md` FIRST, before doing anything else.** This file
+contains the vault repository coordinates (YAML frontmatter) and the exact tools or
+commands to use for reading and writing vault files (markdown body).
 
-If the file does not exist, stop and tell the user to run `/ziki-setup` first.
+**Do NOT write to the local filesystem.** The vault is a remote git repository. Even
+if you see a local checkout of the vault (e.g. `~/Documents/ziki/`), do not use it.
+All reads and writes go through the remote access method described in `~/.claude/ziki.md`.
 
-**Follow the access instructions in the markdown body exactly.** They describe which
-tools or CLI commands to use for reading and writing vault files.
+If `~/.claude/ziki.md` does not exist, stop and tell the user to run `/ziki-setup`.
 
 ## Setup
 
@@ -22,9 +23,8 @@ Before processing, orient yourself by reading these files from the vault:
 
 1. `AGENTS.md` — vault schema, page format, hard rules, provenance markers
 2. `wiki/_index.md` — existing wiki pages and their topics
-3. `wiki/_log.md` (last 20 entries) — what has already been processed
-4. `.manifest.json` — which `_inbox/` files are already ingested (skip these)
-5. `_meta/taxonomy.md` — canonical tag vocabulary
+3. `.manifest.json` — which `_inbox/` files are already ingested (skip these)
+4. `_meta/taxonomy.md` — canonical tag vocabulary
 
 Then list the `_inbox/` directory to discover pending files.
 
@@ -48,7 +48,7 @@ Reject the file if ANY of the following apply:
 - Near-duplicate of an existing wiki page with nothing new to add
 
 To reject: note `status: rejected` and `rejection_reason: <one line>` for the
-frontmatter update. Do not delete the file. Log it. Move on.
+frontmatter update. Do not delete the file. Move on.
 
 **Important**: do not modify the body content of `_inbox/` files. Only update
 frontmatter status fields.
@@ -117,29 +117,25 @@ After processing all files, prepare updates to:
    date, and `pages` array listing wiki pages created/updated
 2. **`wiki/_index.md`**: add new promoted pages to the hand-curated map under the
    appropriate section
-3. **`wiki/_log.md`**: append one entry per file:
-   - `## [YYYY-MM-DD] ingest | <title>` (promoted)
-   - `## [YYYY-MM-DD] rejected | <title> — <reason>` (rejected)
 
 ### 6. Commit and push
 
 Write all changes to the vault in a single commit (follow the write instructions from
-settings):
+`~/.claude/ziki.md`):
 
 - All new/updated `wiki/` pages
 - Updated `_inbox/` files (frontmatter status changes only)
 - Updated `.manifest.json`
 - Updated `wiki/_index.md`
-- Updated `wiki/_log.md`
 
 Commit message: `wiki: process inbox [YYYY-MM-DD] — N promoted, M rejected`
 
 ## Hard rules
 
 - **NEVER** read or write the local filesystem for vault operations
+- **NEVER** use `~/Documents/ziki/` or any other local path
 - **NEVER** edit content of `_inbox/` files (only update frontmatter status fields)
 - **NEVER** invent sources or citations
 - **NEVER** create a near-duplicate wiki page (update the existing one instead)
 - **ALWAYS** use provenance markers: `^[inferred]`, `^[ambiguous]`, `^[stale]`
-- **ALWAYS** log every file processed to `wiki/_log.md`
 - **ALWAYS** write all changes in a single commit at the end
