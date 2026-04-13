@@ -1,9 +1,9 @@
-name: classify-release-level
+name: release-level
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
-    branches: [main]
+    types: [ opened, synchronize, reopened ]
+    branches: [ main ]
 
 permissions:
   contents: read
@@ -11,7 +11,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: classify-release-level-${{ github.event.pull_request.number }}
+  group: release-level-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
@@ -43,7 +43,7 @@ jobs:
         id: claude
         uses: anthropics/claude-code-action@v1
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
             You are the release-level classifier for the `ziki-plugin` repository — a
             Claude Code plugin that ships skills and commands for an AI-managed
