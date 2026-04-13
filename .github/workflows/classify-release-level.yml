@@ -8,6 +8,7 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  id-token: write
 
 concurrency:
   group: classify-release-level-${{ github.event.pull_request.number }}
@@ -33,7 +34,7 @@ jobs:
 
       - name: Checkout PR head
         if: steps.guard.outputs.skip != 'true'
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
