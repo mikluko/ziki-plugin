@@ -172,8 +172,22 @@ After processing all files, prepare updates to:
 
 1. **`.manifest.json`**: add an entry for each processed file with `sha256`, `ingested`
    date, and `pages` array listing wiki pages created/updated
-2. **`wiki/_index.md`**: add new promoted pages to the hand-curated map under the
-   appropriate section
+2. **`wiki/_index.md`**: add new promoted pages to the map under the appropriate
+   section. **This file is not just for humans — it is the recall surface that
+   the `ziki-recall` skill and the SessionStart hook load to make wiki content
+   discoverable from a fresh session.** Treat it with care:
+   - Every promoted wiki page must appear in the index
+   - Every entry must have: the page path, the title, and a one-sentence summary
+     that names the concept clearly enough that a model scanning the index can
+     decide whether to recall the page
+   - Group entries by topic area; keep top-level headings stable so the primed
+     context remains coherent across sessions
+   - Remove entries for deleted/merged pages
+   - If the index grows past ~6KB, split sub-sections into linked sub-indices
+     (e.g. `wiki/_index-nats.md`) and keep `wiki/_index.md` as a terse table of
+     contents — the SessionStart hook truncates anything larger than 6KB
+   - Never let `wiki/_index.md` drift out of sync with `wiki/`; a page that
+     exists but is not indexed is effectively invisible to future sessions
 
 ### 9. Commit and push
 

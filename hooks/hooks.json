@@ -1,6 +1,18 @@
 {
-  "description": "Capture inbox-worthy content before context compaction in long sessions",
+  "description": "Capture inbox-worthy content from sessions and prime sessions with the wiki index for recall",
   "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear",
+        "hooks": [
+          {
+            "type": "agent",
+            "prompt": "Read ~/.claude/ziki.md using the Read tool. If the file does not exist, return {\"hookSpecificOutput\": {\"hookEventName\": \"SessionStart\", \"additionalContext\": \"\"}} immediately — Ziki is not configured for this user.\n\nIf it exists, parse the YAML frontmatter for vault_owner, vault_repo, vault_branch and read the markdown body for vault access instructions. You MUST use the access method described in that file for all vault operations. Do NOT read from the local filesystem. Do NOT use ~/Documents/ziki/ or any local path.\n\nUsing that access method, fetch two files from the vault:\n\n1. `wiki/_index.md` — the human-curated map of wiki pages\n2. `_meta/taxonomy.md` — the tag vocabulary (optional, include if small)\n\nYour job is to prime this Claude Code session with awareness of the Ziki wiki so it can retrieve pages on demand. Return a JSON object in this exact shape:\n\n{\n  \"hookSpecificOutput\": {\n    \"hookEventName\": \"SessionStart\",\n    \"additionalContext\": \"<markdown block described below>\"\n  }\n}\n\nThe `additionalContext` markdown block MUST contain:\n\n- A one-paragraph preamble explaining that a Ziki wiki is available, where it lives (owner/repo/branch), and that the `ziki-recall` skill must be used to fetch pages when the current task touches an indexed topic. Tell the model not to answer from memory when a matching wiki page exists.\n- The full contents of `wiki/_index.md` verbatim, inside a fenced block labeled `wiki/_index.md`.\n- If fetched, an abbreviated taxonomy (tag list only, no descriptions) inside a fenced block labeled `_meta/taxonomy.md`.\n- A short 'How to recall' section reminding the model to call the `ziki-recall` skill with the page path or title, and that the skill will follow [[wikilinks]] up to a small budget.\n\nSize budget: keep `additionalContext` under 8KB. If `wiki/_index.md` is larger than 6KB, include only its top-level headings and first sentence of each entry, and note that the full index is available via `ziki-recall _index`.\n\nIf the vault read fails (auth, network, empty repo), return additionalContext with a one-line notice: `Ziki vault configured but unreachable — recall unavailable this session.` Do NOT fail the hook.\n",
+            "timeout": 60
+          }
+        ]
+      }
+    ],
     "PreCompact": [
       {
         "matcher": "",

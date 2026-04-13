@@ -26,15 +26,41 @@ Fully autonomous inbox processing. Reads pending files from `_inbox/`, classifie
 assesses quality, enriches with web research, and promotes to wiki pages. Commits and
 pushes results.
 
+### `/ziki-recall`
+
+Pull pages from the wiki into the current session so answers are grounded in
+accumulated knowledge instead of re-derived from memory. The underlying
+`ziki-recall` skill also fires autonomously whenever the current task touches
+a topic listed in the session-primed wiki index.
+
 ## Hooks
 
-- **Stop**: reviews the conversation before the agent exits and files any durable
-  knowledge into the inbox
-- **PreCompact**: same logic, triggered before context compaction to preserve knowledge
-  that would otherwise be compressed away
+- **SessionStart**: fetches `wiki/_index.md` from the vault and injects it into
+  the new session as context, so Claude knows what knowledge is available and
+  can call the `ziki-recall` skill to pull specific pages on demand
+- **PreCompact**: reviews the conversation before context compaction and files
+  any durable knowledge into the inbox so it survives compression
 
 Hooks are inactive until `/ziki-setup` has been run. If `~/.claude/ziki.md` does
 not exist, hooks return immediately without doing anything.
+
+## How sessions benefit from the wiki
+
+The plugin closes a full read/write loop around the vault:
+
+1. **Capture** (PreCompact hook → `ziki-add` skill) writes durable findings
+   from each long session into `_inbox/` before context compaction.
+2. **Compile** (scheduled `/ziki-inbox` trigger) promotes inbox drafts into
+   cross-linked `wiki/` pages with ground-truth citations.
+3. **Prime** (SessionStart hook) loads `wiki/_index.md` into every new session
+   so Claude is aware of what's already documented.
+4. **Recall** (`ziki-recall` skill / `/ziki-recall` command) fetches specific
+   wiki pages and follows `[[wikilinks]]` one hop so answers are grounded in
+   the compiled knowledge rather than re-derived from memory.
+
+Because the index is the discovery surface, `/ziki-inbox` is responsible for
+keeping it complete, terse, and under ~6KB — if a page isn't indexed, it is
+effectively invisible to future sessions.
 
 ## Scheduled Processing
 

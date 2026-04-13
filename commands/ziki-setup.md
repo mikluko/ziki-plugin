@@ -126,7 +126,7 @@ Use `mcp__github__push_files` with owner, repo, branch, files array, and message
 ### 5. Scheduled inbox processing
 
 The wiki only becomes useful once inbox items are processed into wiki pages. The
-Stop/PreCompact hooks capture knowledge into `_inbox/`, but nothing promotes it to
+PreCompact hook captures knowledge into `_inbox/`, but nothing promotes it to
 `wiki/` unless the user runs `/ziki-inbox` manually. Offer to automate this.
 
 Explain to the user:
@@ -195,7 +195,10 @@ zero context):
 >     Store clean markdown, not HTML. Check `_refs/` first to avoid duplicates.
 > 11. **Clean up inbox**: delete fully absorbed files, mark others `status: promoted`,
 >     merge or split as needed. The inbox is a mutable staging area.
-> 12. **Update**: `.manifest.json` and `wiki/_index.md`.
+> 12. **Update**: `.manifest.json` and `wiki/_index.md`. The index is the
+>     recall surface loaded by the SessionStart hook and the `ziki-recall`
+>     skill — every promoted page must appear there with a one-sentence
+>     summary. Keep the index under ~6KB; split into sub-indices if needed.
 > 13. **Commit and push**: `wiki: process inbox [YYYY-MM-DD] — N promoted, M rejected`
 >
 > ## Hard rules
@@ -228,8 +231,9 @@ Tell the user:
 - Which vault repo is configured
 - Which access method is being used
 - Whether scheduled processing is active (and at what frequency)
-- That `/ziki-add` and `/ziki-inbox` are available for manual use
-- That hooks (Stop, PreCompact) will auto-capture knowledge from sessions
+- That `/ziki-add`, `/ziki-inbox`, and `/ziki-recall` are available for manual use
+- That hooks (SessionStart, PreCompact) will prime sessions with the wiki index
+  and auto-capture knowledge before context compaction
 
 ## Bootstrapping a new vault
 
