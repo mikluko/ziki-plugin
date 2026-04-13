@@ -1,0 +1,144 @@
+name: classify-release-level
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: classify-release-level-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  classify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Skip if a release/* label already exists
+        id: guard
+        env:
+          LABELS_JSON: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+        run: |
+          set -euo pipefail
+          count=$(jq -r '[.[] | select(startswith("release/"))] | length' <<<"$LABELS_JSON")
+          if [ "$count" -gt 0 ]; then
+            echo "PR already has a release/* label; leaving it alone."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout PR head
+        if: steps.guard.outputs.skip != 'true'
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Classify with Claude
+        if: steps.guard.outputs.skip != 'true'
+        id: claude
+        uses: anthropics/claude-code-base-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            You are the release-level classifier for the `ziki-plugin` repository — a
+            Claude Code plugin that ships skills and commands for an AI-managed
+            personal knowledge base (Zettelkasten-style wiki).
+
+            Your job: classify the current pull request into exactly one of these
+            four buckets and return a strict JSON object as your final message.
+
+            Levels:
+              - "micro" — patch (Z). Bug fixes, typo/wording tweaks, non-behavioral
+                refactors, prompt-polish that doesn't meaningfully change what a skill
+                does, internal cleanup. Lowest-impact user-visible changes.
+              - "meso"  — minor (Y). New skills or commands, new non-breaking
+                behavior, expansions to existing skills, backwards-compatible
+                additions to `.claude-plugin/plugin.json` or `marketplace.json`.
+              - "macro" — major (X). Breaking changes: renaming or removing a skill
+                or command, incompatible schema changes, altering a command contract
+                in a way existing users must adapt to.
+              - "none"  — no release needed. Pure CI/infra changes, docs-only,
+                whitespace, .gitignore, repo chore. Do NOT pick this just because a
+                change is small — pick it only when the change genuinely has zero
+                user-facing impact on plugin consumers.
+
+            Process:
+              1. Run `git fetch origin main` and `git diff --stat origin/main...HEAD`
+                 followed by `git diff origin/main...HEAD` to see the full change.
+              2. Read `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json`
+                 for context on the plugin surface.
+              3. Read the PR title and body from the env vars `PR_TITLE` and `PR_BODY`.
+              4. Pick the LOWEST level that accurately describes the change. Humans
+                 will override if they disagree — never inflate out of caution.
+              5. As your FINAL message, output a single JSON object (and nothing else)
+                 with this exact shape:
+
+                    {"level": "micro|meso|macro|none", "reason": "<one sentence>"}
+
+            Do not modify any files. Do not open sub-PRs. Do not post comments — a
+            later workflow step will handle labeling and commenting based on your JSON.
+          claude_args: "--max-turns 8 --allowed-tools Bash,Read,Grep,Glob"
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+
+      - name: Parse decision and apply label
+        if: steps.guard.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+
+          output_file="${RUNNER_TEMP}/claude-execution-output.json"
+          if [ ! -f "$output_file" ]; then
+            echo "Claude produced no output file; aborting." >&2
+            exit 1
+          fi
+
+          # Last assistant text message from the execution log.
+          final=$(jq -r '[.events[]? | select(.type=="assistant") | .content[]? | select(.type=="text") | .text] | last // empty' "$output_file")
+          if [ -z "$final" ]; then
+            echo "Could not find a final assistant message in Claude output." >&2
+            cat "$output_file" >&2
+            exit 1
+          fi
+
+          # The final message should BE the JSON object. Tolerate surrounding prose
+          # by extracting the last {...} block if direct parsing fails.
+          if ! jq -e . >/dev/null 2>&1 <<<"$final"; then
+            final=$(printf '%s' "$final" | grep -oE '\{[^{}]*\}' | tail -n1 || true)
+          fi
+          if ! jq -e . >/dev/null 2>&1 <<<"$final"; then
+            echo "Claude did not return parseable JSON. Raw final message:" >&2
+            jq -r '[.events[]? | select(.type=="assistant") | .content[]? | select(.type=="text") | .text] | last // empty' "$output_file" >&2
+            exit 1
+          fi
+
+          level=$(jq -r '.level' <<<"$final")
+          reason=$(jq -r '.reason' <<<"$final")
+
+          case "$level" in
+            micro|meso|macro|none) ;;
+            *)
+              echo "Invalid level: $level" >&2
+              exit 1
+              ;;
+          esac
+
+          echo "Claude decision: level=$level reason=$reason"
+
+          if [ "$level" != "none" ]; then
+            gh pr edit "$PR_NUMBER" --add-label "release/${level}"
+          fi
+
+          body_file=$(mktemp)
+          {
+            printf 'Suggested release level: **%s** — %s\n\n' "$level" "$reason"
+            printf '_Applied automatically by `classify-release-level`. Remove or change the `release/*` label if you disagree; the release workflow will honor whatever label is on the PR at merge time._\n'
+          } > "$body_file"
+          gh pr comment "$PR_NUMBER" --body-file "$body_file"

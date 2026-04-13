@@ -1,0 +1,125 @@
+name: release
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve release level from PR labels
+        id: level
+        env:
+          LABELS_JSON: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+        run: |
+          set -euo pipefail
+          # Extract release/* labels from the event payload.
+          mapfile -t release_labels < <(jq -r '.[] | select(startswith("release/"))' <<<"$LABELS_JSON")
+
+          level="none"
+          # Precedence: macro > meso > micro.
+          for candidate in macro meso micro; do
+            for label in "${release_labels[@]:-}"; do
+              if [ "$label" = "release/${candidate}" ]; then
+                level="$candidate"
+                break 2
+              fi
+            done
+          done
+
+          echo "Resolved release level: ${level}"
+          echo "level=${level}" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout main
+        if: steps.level.outputs.level != 'none'
+        uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute next version
+        if: steps.level.outputs.level != 'none'
+        id: version
+        env:
+          LEVEL: ${{ steps.level.outputs.level }}
+        run: |
+          set -euo pipefail
+          current=$(jq -r '.version' .claude-plugin/plugin.json)
+          echo "Current version: ${current}"
+
+          IFS='.' read -r major minor patch <<<"${current}"
+
+          case "$LEVEL" in
+            micro)
+              patch=$((patch + 1))
+              ;;
+            meso)
+              minor=$((minor + 1))
+              patch=0
+              ;;
+            macro)
+              major=$((major + 1))
+              minor=0
+              patch=0
+              ;;
+            *)
+              echo "Unknown level: $LEVEL" >&2
+              exit 1
+              ;;
+          esac
+
+          next="${major}.${minor}.${patch}"
+          echo "Next version: ${next}"
+          echo "next=${next}" >> "$GITHUB_OUTPUT"
+
+      - name: Abort if tag already exists
+        if: steps.level.outputs.level != 'none'
+        env:
+          NEXT: ${{ steps.version.outputs.next }}
+        run: |
+          set -euo pipefail
+          if git rev-parse "v${NEXT}" >/dev/null 2>&1; then
+            echo "Tag v${NEXT} already exists; refusing to re-release." >&2
+            exit 1
+          fi
+
+      - name: Bump version in plugin.json and marketplace.json
+        if: steps.level.outputs.level != 'none'
+        env:
+          NEXT: ${{ steps.version.outputs.next }}
+        run: |
+          set -euo pipefail
+          tmp=$(mktemp)
+          jq --arg v "$NEXT" '.version = $v' .claude-plugin/plugin.json > "$tmp"
+          mv "$tmp" .claude-plugin/plugin.json
+
+          tmp=$(mktemp)
+          jq --arg v "$NEXT" '.plugins[0].version = $v' .claude-plugin/marketplace.json > "$tmp"
+          mv "$tmp" .claude-plugin/marketplace.json
+
+      - name: Commit, tag, and push
+        if: steps.level.outputs.level != 'none'
+        env:
+          NEXT: ${{ steps.version.outputs.next }}
+        run: |
+          set -euo pipefail
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add .claude-plugin/plugin.json .claude-plugin/marketplace.json
+          git commit -m "chore(release): v${NEXT}"
+          git tag -a "v${NEXT}" -m "Release v${NEXT}"
+
+          git push origin main
+          git push origin "v${NEXT}"
