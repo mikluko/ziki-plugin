@@ -236,7 +236,12 @@ Write all changes to the vault in a single commit (follow the write instructions
 - Updated `wiki/_index.md`
 - Updated `wiki/_log.md`
 
-Commit message: `wiki: process inbox [YYYY-MM-DD] — N promoted, M rejected`
+Commit message: `wiki: process inbox #N — X promoted, Y rejected`
+
+`#N` is the inbox-pass sequence number. Determine it by counting prior commits
+on the vault branch whose message matches `^wiki: process inbox` and adding 1.
+The first pass is `#1`. Do not use the date here — git already records it in
+the commit metadata.
 
 ## Hard rules
 
