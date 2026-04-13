@@ -26,18 +26,24 @@ Fully autonomous inbox processing. Reads pending files from `_inbox/`, classifie
 assesses quality, enriches with web research, and promotes to wiki pages. Commits and
 pushes results.
 
+### `/ziki-prime`
+
+Load the wiki index into the current session so Claude knows what knowledge
+is available. Runs automatically at session start via a hook; run it manually
+to refresh after the hourly inbox trigger has promoted new pages mid-session.
+
 ### `/ziki-recall`
 
-Pull pages from the wiki into the current session so answers are grounded in
-accumulated knowledge instead of re-derived from memory. The underlying
-`ziki-recall` skill also fires autonomously whenever the current task touches
-a topic listed in the session-primed wiki index.
+Pull specific pages from the wiki into the current session so answers are
+grounded in accumulated knowledge instead of re-derived from memory. The
+underlying `ziki-recall` skill also fires autonomously whenever the current
+task touches a topic listed in the session-primed wiki index.
 
 ## Hooks
 
-- **SessionStart**: fetches `wiki/_index.md` from the vault and injects it into
-  the new session as context, so Claude knows what knowledge is available and
-  can call the `ziki-recall` skill to pull specific pages on demand
+- **SessionStart**: invokes the `ziki-prime` skill to load `wiki/_index.md`
+  into the new session as context, so Claude knows what knowledge is available
+  and can call the `ziki-recall` skill to pull specific pages on demand
 - **PreCompact**: reviews the conversation before context compaction and files
   any durable knowledge into the inbox so it survives compression
 
@@ -52,8 +58,9 @@ The plugin closes a full read/write loop around the vault:
    from each long session into `_inbox/` before context compaction.
 2. **Compile** (scheduled `/ziki-inbox` trigger) promotes inbox drafts into
    cross-linked `wiki/` pages with ground-truth citations.
-3. **Prime** (SessionStart hook) loads `wiki/_index.md` into every new session
-   so Claude is aware of what's already documented.
+3. **Prime** (SessionStart hook → `ziki-prime` skill) loads `wiki/_index.md`
+   into every new session so Claude is aware of what's already documented.
+   `/ziki-prime` re-runs the skill manually when the wiki changes mid-session.
 4. **Recall** (`ziki-recall` skill / `/ziki-recall` command) fetches specific
    wiki pages and follows `[[wikilinks]]` one hop so answers are grounded in
    the compiled knowledge rather than re-derived from memory.

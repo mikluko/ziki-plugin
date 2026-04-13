@@ -231,9 +231,11 @@ Tell the user:
 - Which vault repo is configured
 - Which access method is being used
 - Whether scheduled processing is active (and at what frequency)
-- That `/ziki-add`, `/ziki-inbox`, and `/ziki-recall` are available for manual use
-- That hooks (SessionStart, PreCompact) will prime sessions with the wiki index
-  and auto-capture knowledge before context compaction
+- That `/ziki-add`, `/ziki-inbox`, `/ziki-prime`, and `/ziki-recall` are
+  available for manual use
+- That hooks (SessionStart, PreCompact) will prime sessions with the wiki
+  index (via the `ziki-prime` skill) and auto-capture knowledge before
+  context compaction
 
 ## Bootstrapping a new vault
 
