@@ -134,6 +134,17 @@ jobs:
           echo "Claude decision: level=$level reason=$reason"
 
           if [ "$level" != "none" ]; then
+            # Ensure the label exists before attaching it — gh pr edit --add-label
+            # fails if the label is missing from the repo.
+            case "$level" in
+              micro) color="c2e0c6"; desc="Patch release (Z)." ;;
+              meso)  color="bfd4f2"; desc="Minor release (Y)." ;;
+              macro) color="f9d0c4"; desc="Major release (X)." ;;
+            esac
+            gh label create "release/${level}" \
+              --color "$color" \
+              --description "$desc" \
+              --force
             gh pr edit "$PR_NUMBER" --add-label "release/${level}"
           fi
 
