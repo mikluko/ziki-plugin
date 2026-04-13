@@ -54,13 +54,21 @@ Do not delete rejected files. Move on.
 
 For files that pass assessment:
 - Search `wiki/` for related pages (read directory listing, then relevant files)
+- **Start from the inbox file's `ground_truth:` field** — the `ziki-add` skill is
+  supposed to have captured the primary sources at filing time. Read each
+  `_refs/` snapshot listed there and treat them as the authoritative baseline.
 - For draft pages: use web search to verify facts, fill gaps, and find current
   information (drafts are often written from memory and may be stale)
 - For raw sources: identify all concepts and entities; determine which existing wiki
   pages to update and which new pages to create
 - Identify wikilinks the content missed; find connections to existing pages
-- **Identify ground truth sources**: find authoritative URLs for the topic (official
-  docs, specifications, primary sources). These go into the `ground_truth:` field.
+- **Supplement ground truth if needed**: if the inbox file's `ground_truth:` is
+  empty or incomplete, find additional authoritative URLs (official docs,
+  specifications, primary sources) and cache substantial ones to `_refs/`.
+  Missing ground truth on a factual draft is a quality issue — note it in
+  `wiki/_log.md` so the `ziki-add` pathway can be improved.
+- **Never replace ground truth with your own synthesis** — the whole point is
+  that the wiki page is derivative and must be traceable back to primary sources.
 
 ### 4. Re-verify before writing
 
