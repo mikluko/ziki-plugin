@@ -138,31 +138,25 @@ appropriate. Prefer updating an existing page over creating a near-duplicate.
 **Draft pages** should be refined and expanded to full wiki quality: complete
 frontmatter, verified facts, wikilinks, provenance markers.
 
-### 6. Cache reference material
+### 6. Cache additional reference material
 
-When you fetch a URL during enrichment that serves as ground truth for a wiki page,
-consider caching it in `_refs/` to preserve the content and save future bandwidth.
+`_refs/` caching conventions (naming, frontmatter, when-to-cache, when-not-to,
+web/repo-file/session origin types) are defined in the `ziki-add` skill under
+"Reference snapshots (`_refs/`)". Follow them here too — do not invent a
+different scheme.
 
-**When to cache**: official documentation, specifications, substantial articles that
-wiki pages will cite as ground truth. Do NOT cache trivial pages or search results.
+At this stage you are only responsible for **enrichment-time** snapshots: any
+extra ground-truth sources you discovered during research (step 3) that were
+not already cached by the original `ziki-add` call. The draft's existing
+`_refs/` snapshots should be preserved as-is, not re-fetched or renamed.
 
-**Naming**: `<domain>--<kebab-title>.md`
-Examples: `docs-nats-io--jetstream-overview.md`, `kubernetes-io--pod-lifecycle.md`
+Before creating a new snapshot:
+- List `_refs/` and reuse an existing file if it covers the same source
+- For repo files, always pin to a commit SHA — never reference `main`/`HEAD`
+- One file per source (URL, repo-file-at-commit, or pasted artifact)
 
-**Frontmatter**:
-```markdown
----
-url: "https://docs.nats.io/nats-concepts/jetstream"
-fetched: YYYY-MM-DD
-content_type: documentation | article | specification | transcript
----
-```
-
-Store clean extracted markdown, not raw HTML. One file per source URL. Check `_refs/`
-first to avoid duplicates.
-
-When a `_refs/` snapshot is created, use the `_refs/` path in the wiki page's
-`ground_truth:` field alongside the original URL.
+When a new `_refs/` snapshot is created, add its path to the wiki page's
+`ground_truth:` field alongside any canonical URL.
 
 ### 7. Clean up inbox
 
@@ -174,12 +168,30 @@ After promoting an inbox file, you may:
 
 The inbox is a mutable staging area. Do not treat it as an archive.
 
+**Never delete `_refs/` snapshots as part of inbox cleanup.** Once a snapshot
+has been referenced by a promoted wiki page's `ground_truth:` field (or by any
+remaining inbox file), it is a live dependency of the wiki and must be
+preserved. The rule is simple: `_inbox/` is staging; `_refs/` is permanent
+ground-truth infrastructure. Removing a `_refs/` file orphans every page that
+cites it and breaks the re-verification chain on all future inbox passes.
+
+A `_refs/` snapshot may be removed only if it has zero inbound references
+from both `wiki/` and `_inbox/`. Do not perform that sweep as part of routine
+inbox processing; leave stale-refs cleanup to a dedicated future pass.
+
 ### 8. Update supporting files
 
 After processing all files, prepare updates to:
 
-1. **`.manifest.json`**: add an entry for each processed file with `sha256`, `ingested`
-   date, and `pages` array listing wiki pages created/updated
+1. **`.manifest.json`**: add an entry for each processed file with:
+   - `sha256` — content hash of the inbox file
+   - `ingested` — date promoted (YYYY-MM-DD)
+   - `pages` — array of wiki pages created or updated from this file
+   - `refs` — array of `_refs/` paths the inbox file contributed or relied on
+     (its own `ground_truth:` entries plus any snapshots added during step 6
+     enrichment). This makes orphan detection tractable: a future pass can
+     compute `{all _refs/} − {refs referenced by any manifest entry or any
+     live inbox file}` to find stale snapshots.
 2. **`wiki/_index.md`**: add new promoted pages to the map under the appropriate
    section. **This file is not just for humans — it is the recall surface that
    the `ziki-recall` skill and the SessionStart hook load to make wiki content
@@ -196,6 +208,21 @@ After processing all files, prepare updates to:
      contents — the SessionStart hook truncates anything larger than 6KB
    - Never let `wiki/_index.md` drift out of sync with `wiki/`; a page that
      exists but is not indexed is effectively invisible to future sessions
+3. **`wiki/_log.md`**: append a single dated entry for this inbox pass recording
+   what was processed. Format:
+
+   ```markdown
+   ## YYYY-MM-DD — inbox pass
+
+   - Promoted: `_inbox/foo.md` → `wiki/foo.md` (N refs)
+   - Rejected: `_inbox/bar.md` (reason: too thin)
+   - Quality issues: `_inbox/baz.md` arrived with empty `ground_truth:`
+     (supplemented during enrichment) — feedback for `ziki-add` pathway
+   ```
+
+   This log is append-only and gives a running audit trail of what the wiki
+   ingested, what was rejected, and where the upstream `ziki-add` capture
+   pipeline needs improvement. Keep entries terse — one bullet per file.
 
 ### 9. Commit and push
 
@@ -203,10 +230,11 @@ Write all changes to the vault in a single commit (follow the write instructions
 `~/.claude/ziki.md`):
 
 - All new/updated `wiki/` pages
-- Any new `_refs/` snapshots
+- Any new `_refs/` snapshots (never delete existing ones)
 - Updated or deleted `_inbox/` files
 - Updated `.manifest.json`
 - Updated `wiki/_index.md`
+- Updated `wiki/_log.md`
 
 Commit message: `wiki: process inbox [YYYY-MM-DD] — N promoted, M rejected`
 
@@ -216,6 +244,11 @@ Commit message: `wiki: process inbox [YYYY-MM-DD] — N promoted, M rejected`
 - **NEVER** use `~/Documents/ziki/` or any other local path
 - **NEVER** invent sources or citations
 - **NEVER** create a near-duplicate wiki page (update the existing one instead)
+- **NEVER** delete a `_refs/` snapshot during routine inbox processing — refs
+  are permanent wiki dependencies, not inbox staging
 - **ALWAYS** populate `ground_truth:` with at least one authoritative URL per wiki page
+- **ALWAYS** record the inbox file's `refs` in the `.manifest.json` entry so
+  orphan detection stays tractable
+- **ALWAYS** append a single dated entry to `wiki/_log.md` per inbox pass
 - **ALWAYS** use provenance markers: `^[inferred]`, `^[ambiguous]`, `^[stale]`
 - **ALWAYS** write all changes in a single commit at the end
